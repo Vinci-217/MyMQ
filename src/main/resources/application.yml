@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: MessageQueue
+
+server:
+  port: 15672
