@@ -1,24 +1,37 @@
 package com.mq.cn.messagequeue.entity;
 
-
 import org.springframework.stereotype.Component;
 
-import java.util.Deque;
-import java.util.LinkedList;
+import java.util.HashMap;
+import java.util.Map;
 
 @Component
 public class MessageQueue {
-    private final Deque<Message> queue = new LinkedList<>();
 
-    public synchronized void publish(Message message) {
-        queue.offer(message);
-        notifyAll(); // 通知等待的消费者
+    private Map<String, Queue> queueList = new HashMap<>();
+
+    public MessageQueue() {
+        // 默认队列，用来实现全广播
+        queueList.put("default", new Queue());
     }
 
-    public synchronized Message consume() throws InterruptedException {
-        while (queue.isEmpty()) {
-            wait(); // 等待消息
+    public synchronized void produce(String topic, Message message) throws InterruptedException {
+        if (!queueList.containsKey(topic)) {
+            queueList.put(topic, new Queue());
         }
-        return queue.poll();
+        queueList.get(topic).put(message);
     }
+
+    public synchronized Message consume(String topic) throws InterruptedException {
+        if (!queueList.containsKey(topic)) {
+            return null;
+        }
+        return queueList.get(topic).take();
+    }
+
+
+    public synchronized Queue getDefalutQueue() {
+        return queueList.get("default");
+    }
+
 }
